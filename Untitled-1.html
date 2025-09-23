@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Gra Clicker</title>
+  <style>
+    
+    body { 
+        text-align:center; font-family:sans-serif; padding:40px; 
+    }
+
+    button { 
+        padding:10px 20px; margin:10px; font-size:18px; 
+    }
+    #info { 
+        margin-top:15px; font-weight:bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gra Clicker</h1>
+
+  <p>Punkty: <span id="score">0</span></p>
+  <p>Czas: <span id="time">10</span>s</p>
+
+  <button id="clickBtn">Kliknij</button>
+  <button id="autoBtn">Auto Klikacz (+1/s za 20)</button>
+
+  <p id="info"></p>
+
+  <script>
+    let score=0, time=10, auto=false;
+    const s=document.getElementById("score"), t=document.getElementById("time"), i=document.getElementById("info");
+    const click=document.getElementById("clickBtn"), autoBtn=document.getElementById("autoBtn");
+
+    const timer=setInterval(()=>{ 
+      if(--time>=0) t.textContent=time; 
+      else { clearInterval(timer); click.disabled=autoBtn.disabled=true; i.textContent="Koniec! Wynik: "+score; }
+    },1000);
+
+    click.onclick=()=>{ 
+      if(time>0){ 
+        s.textContent=++score; 
+        if(score==10)i.textContent="Masz 10 punktów!"; 
+        if(score==50)i.textContent="Mistrz klikera!";
+      } 
+    };
+
+    autoBtn.onclick=()=>{ 
+      if(!auto && score>=20){ 
+        score-=20; s.textContent=score; auto=true; 
+        setInterval(()=>{ if(time>0) s.textContent=++score; },1000); 
+      } 
+    };
+  </script>
+
+</body>
+</html>
