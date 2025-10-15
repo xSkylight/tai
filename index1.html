@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Gra Clicker</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #1e1e1e, #2a2a2a);
+      color: #f0f0f0;
+      text-align: center;
+      padding: 30px;
+    }
+
+    h1 {
+      font-size: 36px;
+      margin-bottom: 20px;
+      color: #00ffcc;
+    }
+
+    input, button {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+    }
+
+    input {
+      background-color: #333;
+      color: #fff;
+      border: 1px solid #555;
+    }
+
+    button {
+      background-color: #00aa88;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background-color: #008066;
+    }
+
+    .view {
+      margin: 15px auto;
+      padding: 10px;
+      border: 1px solid #555;
+      width: 300px;
+      background-color: #222;
+      border-radius: 8px;
+    }
+
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 90%;
+      background: #333;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      border: 1px solid #666;
+      padding: 10px;
+      color: #fff;
+    }
+
+    th {
+      background-color: #444;
+    }
+
+    .tooltip {
+      position: relative;
+      display: inline-block;
+      cursor: pointer;
+      margin-top: 10px;
+      font-size: 20px;
+      background: #00aa88;
+      color: white;
+      padding: 5px 10px;
+      border-radius: 50%;
+    }
+
+    .tooltip .tooltiptext {
+      visibility: hidden;
+      width: 220px;
+      background-color: #222;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      padding: 8px;
+      position: absolute;
+      z-index: 1;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      box-shadow: 0 0 10px #000;
+    }
+
+    .tooltip:hover .tooltiptext {
+      visibility: visible;
+      opacity: 1;
+    }
+
+    #info {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #ffcc00;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gra Clicker</h1>
+
+  <input type="text" id="nickname" placeholder="Podaj nick">
+  <div class="view">
+    <div>Nick: <span id="name">-</span></div>
+    <div>Wynik: <span id="scoreView">0</span></div>
+  </div>
+
+  <p>Punkty: <span id="score">0</span></p>
+  <p>Czas: <span id="time">10</span>s</p>
+
+  <button id="clickBtn">Kliknij</button>
+  <button id="autoBtn">Auto Klikacz (+1/s za 20)</button>
+  <button id="saveBtn">Zapisz</button>
+
+  <div class="tooltip">?
+    <span class="tooltiptext" id="hint">AutoKlikacze: 0</span>
+  </div>
+
+  <table>
+    <thead>
+      <tr><th>#</th><th>Nick</th><th>Wynik</th><th>AutoKlikacze</th></tr>
+    </thead>
+    <tbody id="ranking"></tbody>
+  </table>
+
+  <p id="info"></p>
+
+  <script>
+    let score = 0, time = 10, auto = false, autoCount = 0;
+    const rankingData = [];
+
+    const s = document.getElementById("score");
+    const t = document.getElementById("time");
+    const i = document.getElementById("info");
+    const name = document.getElementById("name");
+    const scoreView = document.getElementById("scoreView");
+    const nick = document.getElementById("nickname");
+    const click = document.getElementById("clickBtn");
+    const autoBtn = document.getElementById("autoBtn");
+    const save = document.getElementById("saveBtn");
+    const table = document.getElementById("ranking");
+    const hint = document.getElementById("hint");
+
+    nick.oninput = () => {
+      name.textContent = nick.value || "-";
+      scoreView.textContent = score;
+    };
+
+    const timer = setInterval(() => {
+      if (--time >= 0) t.textContent = time;
+      else {
+        clearInterval(timer);
+        clearInterval(autoInterval);
+        click.disabled = autoBtn.disabled = true;
+        i.textContent = "Koniec! Wynik: " + score;
+      }
+    }, 1000);
+
+    click.onclick = () => {
+      if (time > 0) {
+        s.textContent = ++score;
+        scoreView.textContent = score;
+        if (score >= 20) autoBtn.disabled = false;
+      }
+    };
+
+    let autoInterval;
+    autoBtn.onclick = () => {
+      if (!auto && score >= 20) {
+        score -= 20;
+        s.textContent = score;
+        scoreView.textContent = score;
+        auto = true;
+        autoCount++;
+        hint.textContent = "AutoKlikacze: " + autoCount;
+        autoInterval = setInterval(() => {
+          if (time > 0) {
+            s.textContent = ++score;
+            scoreView.textContent = score;
+          }
+        }, 1000);
+      }
+    };
+
+    save.onclick = () => {
+      const nickname = nick.value || "Anonim";
+      const existing = rankingData.find(r => r.nick === nickname);
+      if (existing) {
+        if (score > existing.score) {
+          existing.score = score;
+          existing.auto = autoCount;
+          i.textContent = "Zaktualizowano wynik";
+        } else {
+          i.textContent = "Nie zapisano (gorszy wynik)";
+          return;
+        }
+      } else {
+        rankingData.push({ nick: nickname, score: score, auto: autoCount });
+        i.textContent = "Zapisano nowy wynik";
+      }
+
+      rankingData.sort((a, b) => b.score - a.score);
+      table.innerHTML = rankingData.map((r, i) => `
+        <tr><td>${i + 1}</td><td>${r.nick}</td><td>${r.score}</td><td>${r.auto}</td></tr>
+      `).join("");
+    };
+  </script>
+
+</body>
+</html>
